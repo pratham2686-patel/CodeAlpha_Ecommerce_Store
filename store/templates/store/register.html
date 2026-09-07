@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Account - ElectroMart{% endblock %}
+
+{% block content %}
+
+<div class="auth-container">
+  <h1 class="auth-title">Join ElectroMart</h1>
+  <p class="auth-subtitle">Create an account to track orders and save your wishlist</p>
+
+  <form method="post" action="{% url 'store:register' %}">
+    {% csrf_token %}
+
+    {% for field in form %}
+      <div class="form-group">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <div style="color: var(--accent-rose); font-size: 0.8rem; margin-top: 0.25rem;">
+            {{ field.errors.0 }}
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem; padding: 0.85rem;">
+      <i class="fas fa-user-plus"></i> Create Account
+    </button>
+  </form>
+
+  <p style="text-align: center; margin-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
+    Already have an account? 
+    <a href="{% url 'store:login' %}" style="color: #818cf8; font-weight: 600;">Sign in here</a>
+  </p>
+</div>
+
+{% endblock %}

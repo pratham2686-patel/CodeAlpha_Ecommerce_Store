@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Saved Items & Wishlist - ElectroMart{% endblock %}
+
+{% block content %}
+
+<div style="margin: 2rem 0 1.5rem;">
+  <h1 class="section-title">
+    <i class="fas fa-heart" style="color: var(--accent-rose);"></i> 
+    My Saved Items & Wishlist
+  </h1>
+  <p style="color: var(--text-muted);">Products you've saved to purchase later</p>
+</div>
+
+{% if wishlist_items %}
+  <div class="product-grid" style="margin-bottom: 4rem;">
+    {% for item in wishlist_items %}
+      {% with product=item.product %}
+        <div class="product-card">
+          <div class="card-badge-container">
+            {% if product.stock == 0 %}
+              <span class="card-badge discount-badge"><i class="fas fa-ban"></i> Out of Stock</span>
+            {% else %}
+              <span class="card-badge" style="background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);"><i class="fas fa-bookmark"></i> Saved</span>
+            {% endif %}
+          </div>
+
+          <a href="{% url 'store:wishlist_remove' product.id %}" class="btn-wishlist active" title="Remove from Wishlist">
+            <i class="fas fa-heart"></i>
+          </a>
+
+          <a href="{{ product.get_absolute_url }}" class="product-img-wrapper">
+            <img src="{{ product.image_url }}" alt="{{ product.name }}">
+          </a>
+
+          <div class="product-info">
+            <span class="product-category">{{ product.category.name }}</span>
+            <h3 class="product-name">
+              <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
+            </h3>
+
+            <div class="product-rating">
+              <i class="fas fa-star"></i>
+              <span>{{ product.rating }}</span>
+              <span style="color: var(--text-dim); margin-left: 0.25rem;">
+                {% if product.stock > 0 %}
+                  ({{ product.stock }} in stock)
+                {% else %}
+                  (Out of Stock)
+                {% endif %}
+              </span>
+            </div>
+
+            <div style="font-size: 0.78rem; color: var(--text-dim); margin-bottom: 0.75rem;">
+              Saved on {{ item.created_at|date:"M d, Y" }}
+            </div>
+
+            <div class="product-bottom" style="flex-direction: column; gap: 0.65rem; align-items: stretch;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="product-price">${{ product.price }}</span>
+              </div>
+
+              {% if product.stock > 0 %}
+                <a href="{% url 'store:wishlist_move_to_cart' product.id %}" class="btn-primary" style="padding: 0.55rem; font-size: 0.88rem;">
+                  <i class="fas fa-cart-plus"></i> Move to Cart
+                </a>
+              {% else %}
+                <button type="button" class="btn-primary" disabled style="background: #cbd5e1; cursor: not-allowed; opacity: 0.75; padding: 0.55rem; font-size: 0.88rem;">
+                  <i class="fas fa-ban"></i> Out of Stock
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endwith %}
+    {% endfor %}
+  </div>
+{% else %}
+  <div style="text-align: center; padding: 4rem 1rem; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-color); margin: 2rem 0 4rem; box-shadow: var(--shadow-sm);">
+    <i class="far fa-heart" style="font-size: 4rem; color: var(--text-dim); margin-bottom: 1.25rem;"></i>
+    <h2>Your wishlist is empty</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1.75rem;">
+      You haven't saved any items for later yet. Click the heart icon on any product to save it here!
+    </p>
+    <a href="{% url 'store:product_list' %}" class="btn-primary" style="display: inline-flex; width: auto;">
+      <i class="fas fa-shopping-bag"></i> Discover Products
+    </a>
+  </div>
+{% endif %}
+
+{% endblock %}

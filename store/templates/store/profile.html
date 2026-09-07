@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+
+{% block title %}My Account & Orders - ElectroMart{% endblock %}
+
+{% block content %}
+
+<div style="margin: 2rem 0 1.5rem;">
+  <h1 class="section-title">
+    <i class="fas fa-user-circle" style="color: var(--primary);"></i> 
+    My Account Dashboard
+  </h1>
+  <p style="color: var(--text-muted);">
+    Manage your profile information, track purchases, and preview or download invoice bills
+  </p>
+</div>
+
+<div class="profile-layout" style="display: grid; grid-template-columns: 320px 1fr; gap: 2rem; margin-bottom: 4rem;">
+  
+  <!-- User Profile Info Card & Total Purchase Metrics -->
+  <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.75rem; box-shadow: var(--shadow-sm);">
+      <div style="text-align: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.25rem;">
+        <div style="width: 70px; height: 70px; background: var(--primary-light); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 0.75rem;">
+          <i class="fas fa-user"></i>
+        </div>
+        <h3 style="font-size: 1.2rem;">{{ user.username }}</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">{{ user.email }}</p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-muted);">
+          <span>Member Since:</span>
+          <span style="color: var(--text-main); font-weight: 600;">{{ user.date_joined|date:"M Y" }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-muted);">
+          <span>Total Orders:</span>
+          <span style="color: var(--primary); font-weight: 700;">{{ orders.count }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Accumulated Spent Metric Box -->
+    <div style="background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); border-radius: var(--radius-lg); padding: 1.75rem; color: #ffffff; box-shadow: var(--shadow-glow);">
+      <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.9; margin-bottom: 0.25rem;">
+        Total Spent
+      </div>
+      <div style="font-size: 2.2rem; font-weight: 800; font-family: var(--font-heading);">
+        ${{ total_spent|floatformat:2 }}
+      </div>
+      <div style="font-size: 0.85rem; opacity: 0.85; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+        <i class="fas fa-shopping-bag"></i> {{ total_items_purchased }} total product{% if total_items_purchased != 1 %}s{% endif %} purchased
+      </div>
+    </div>
+  </div>
+
+  <!-- Order History List -->
+  <div>
+    <h2 style="font-size: 1.4rem; margin-bottom: 1rem;">Purchase History & Invoices</h2>
+
+    {% if orders %}
+      
+      <!-- PART 1: SHOW ONLY FIRST 5 ORDERS -->
+      <div style="display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 1rem;">
+        {% for order in orders|slice:":5" %}
+          <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <span style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);">Order #{{ order.id }}</span>
+                <span style="color: var(--text-dim); font-size: 0.85rem; margin-left: 0.5rem;">
+                  <i class="fas fa-clock" style="color: var(--text-muted);"></i> Placed on <strong>{{ order.created_at|date:"M d, Y \a\t h:i A" }}</strong>
+                </span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <!-- COLOR-CODED STATUS BADGE -->
+                {% if order.status == 'Pending' %}
+                  <span style="background: #f59e0b; color: #fff; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;"><i class="fas fa-hourglass-half"></i> Pending</span>
+                {% elif order.status == 'Processing' %}
+                  <span style="background: #3b82f6; color: #fff; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;"><i class="fas fa-arrows-rotate"></i> Processing</span>
+                {% elif order.status == 'Shipped' %}
+                  <span style="background: #8b5cf6; color: #fff; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;"><i class="fas fa-truck"></i> Shipped</span>
+                {% elif order.status == 'Delivered' %}
+                  <span style="background: #22c55e; color: #fff; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;"><i class="fas fa-circle-check"></i> Delivered</span>
+                {% else %}
+                  <span style="background: #64748b; color: #fff; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">{{ order.status }}</span>
+                {% endif %}
+                
+              </div>
+            </div>
+
+            <!-- Visual Order Tracking Timeline -->
+            {% include 'store/_order_tracker.html' %}
+
+            <div style="margin-bottom: 1rem;">
+              {% for item in order.items.all %}
+                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.4rem;">
+                  <span style="color: var(--text-muted);">{{ item.quantity }}x {{ item.product.name }}</span>
+                  <span style="font-weight: 600;">${{ item.get_cost }}</span>
+                </div>
+              {% endfor %}
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color); padding-top: 0.75rem;">
+              <span style="font-size: 0.85rem; color: var(--text-muted);">Shipped to: {{ order.city }}</span>
+              <span style="font-size: 1.2rem; font-weight: 800; color: var(--primary);">${{ order.total_price }}</span>
+            </div>
+
+            <!-- ORDER TRACKING TIMELINE + ESTIMATED DELIVERY -->
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border-color);">
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                <span style="font-weight: 600;">Estimated Delivery</span>
+                <span style="color: var(--primary); font-weight: 700;">
+                  <i class="fas fa-calendar-days"></i>
+                  {{ order.delivery_start|date:"M d" }} – {{ order.delivery_end|date:"M d, Y" }}
+                </span>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- PART 2: HIDDEN ORDERS (Remaining 6th to Last) -->
+      <div id="hidden-orders-container" style="display: none;">
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+          {% for order in orders|slice:"5:" %}
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                  <span style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);">Order #{{ order.id }}</span>
+                  <span style="color: var(--text-dim); font-size: 0.85rem; margin-left: 0.5rem;">
+                    <i class="fas fa-clock" style="color: var(--text-muted);"></i> Placed on <strong>{{ order.created_at|date:"M d, Y \a\t h:i A" }}</strong>
+                  </span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  {% if order.status == 'Pending' %}
+                    <span style="background: #f59e0b; color: #fff; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;"><i class="fas fa-hourglass-half"></i> Pending</span>
+                  {% elif order.status == 'Processing' %}
+                    <span style="background: #3b82f6; color: #fff; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;"><i class="fas fa-arrows-rotate"></i> Processing</span>
+                  {% elif order.status == 'Shipped' %}
+                    <span style="background: #8b5cf6; color: #fff; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;"><i class="fas fa-truck"></i> Shipped</span>
+                  {% elif order.status == 'Delivered' %}
+                    <span style="background: #22c55e; color: #fff; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;"><i class="fas fa-circle-check"></i> Delivered</span>
+                  {% else %}
+                    <span style="background: #64748b; color: #fff; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">{{ order.status }}</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Visual Order Tracking Timeline -->
+              {% include 'store/_order_tracker.html' %}
+
+              <div style="margin-bottom: 1rem;">
+                {% for item in order.items.all %}
+                  <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.4rem;">
+                    <span style="color: var(--text-muted);">{{ item.quantity }}x {{ item.product.name }}</span>
+                    <span style="font-weight: 600;">${{ item.get_cost }}</span>
+                  </div>
+                {% endfor %}
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color); padding-top: 0.75rem; margin-bottom: 0.75rem;">
+                <span style="font-size: 0.85rem; color: var(--text-muted);">Shipped to: {{ order.city }}</span>
+                <span style="font-size: 1.2rem; font-weight: 800; color: var(--primary);">${{ order.total_price }}</span>
+              </div>
+              <!-- Estimated Delivery for hidden orders -->
+              <div style="font-size: 0.82rem; color: var(--text-muted); padding-top: 0.5rem; border-top: 1px dashed var(--border-color);">
+                <span style="font-weight: 600;">Estimated Delivery:</span>
+                <span style="color: var(--primary); font-weight: 700;">
+                  <i class="fas fa-calendar-days"></i>
+                  {{ order.delivery_start|date:"M d" }} – {{ order.delivery_end|date:"M d, Y" }}
+                </span>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- PART 3: TOGGLE BUTTON (AT THE VERY BOTTOM) -->
+      {% if orders.count > 5 %}
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+          <a href="javascript:void(0)" onclick="toggleAllOrders()" id="toggleOrdersBtn" style="color: var(--primary); font-weight: 600; font-size: 0.9rem; cursor: pointer;">
+            View all {{ orders.count }} orders <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+
+        <!-- JAVASCRIPT FOR TOGGLE -->
+        <script>
+          function toggleAllOrders() {
+            var hiddenContainer = document.getElementById('hidden-orders-container');
+            var toggleBtn = document.getElementById('toggleOrdersBtn');
+            if (hiddenContainer.style.display === 'none') {
+              hiddenContainer.style.display = 'block';
+              toggleBtn.innerHTML = 'Show less orders <i class="fas fa-arrow-up"></i>';
+            } else {
+              hiddenContainer.style.display = 'none';
+              toggleBtn.innerHTML = 'View all {{ orders.count }} orders <i class="fas fa-arrow-right"></i>';
+            }
+          }
+        </script>
+      {% endif %}
+
+      <!-- Single Action Buttons Section at the End of the Page -->
+      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow-sm); flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <div style="font-weight: 700; font-size: 0.95rem;">Account Purchase Statement</div>
+          <div style="font-size: 0.82rem; color: var(--text-muted);">
+            Includes all products purchased across your account (Total Spent: ${{ total_spent|floatformat:2 }})
+          </div>
+        </div>
+        <div style="display: flex; gap: 0.65rem;">
+          <a href="{% url 'store:download_invoice_pdf' orders.first.id %}?preview=1" target="_blank" class="btn-compact" style="background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%); color: #fff;">
+            <i class="fas fa-eye"></i> Preview PDF
+          </a>
+          <a href="{% url 'store:download_invoice_pdf' orders.first.id %}" class="btn-compact" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #fff;">
+            <i class="fas fa-file-pdf"></i> Download PDF
+          </a>
+        </div>
+      </div>
+    {% else %}
+      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 3rem 1rem; text-align: center; box-shadow: var(--shadow-sm);">
+        <i class="fas fa-receipt" style="font-size: 3rem; color: var(--text-dim); margin-bottom: 1rem;"></i>
+        <h3>No orders yet</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
+          You haven't placed any orders with this account yet.
+        </p>
+        <a href="{% url 'store:product_list' %}" class="btn-primary" style="display: inline-flex; width: auto;">
+          Explore Shop
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Shopping Cart - ElectroMart{% endblock %}
+
+{% block content %}
+<div style="margin: 2rem 0 1.5rem;">
+  <h1 class="section-title"><i class="fas fa-shopping-bag" style="color: var(--primary);"></i> Your Shopping Cart</h1>
+  <p style="color: var(--text-muted);">Review items in your cart before proceeding to checkout</p>
+</div>
+
+{% if cart %}
+  <div id="cartAjaxRoot">
+  <div class="cart-layout" style="display: grid; grid-template-columns: 1fr 360px; gap: 2rem; margin-bottom: 4rem; align-items: start;">
+    <!-- Cart Items Table -->
+    <div class="cart-table-wrapper" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm);">
+      <table class="cart-table" style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: var(--bg-input); border-bottom: 1px solid var(--border-color);">
+            <th style="padding: 1rem 1.25rem; text-align: left;">Product</th>
+            <th style="padding: 1rem; text-align: center;">Price</th>
+            <th style="padding: 1rem; text-align: center;">Quantity</th>
+            <th style="padding: 1rem; text-align: right;">Total</th>
+            <th style="padding: 1rem; text-align: center;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in cart %}
+            {% with product=item.product %}
+              <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 1.25rem;">
+                  <div style="display: flex; align-items: center; gap: 1rem;">
+                    <img src="{{ product.image_url }}" alt="{{ product.name }}" style="width: 70px; height: 70px; min-width: 70px; max-width: 70px; object-fit: cover; border-radius: var(--radius-sm); background: var(--bg-input); border: 1px solid var(--border-color);">
+                    <div>
+                      <a href="{{ product.get_absolute_url }}" style="font-weight: 700; color: var(--text-main); font-size: 0.98rem;">{{ product.name }}</a>
+                      <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+                        <i class="fas {{ product.category.icon }}" style="font-size: 0.75rem;"></i> {{ product.category.name }}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td style="padding: 1rem; text-align: center; font-weight: 600; color: var(--text-main);">${{ item.price }}</td>
+                <td style="padding: 1rem; text-align: center;">
+                  <form action="{% url 'store:cart_add' product.id %}" method="post" class="cart-ajax-form" style="display: inline-flex; gap: 0.4rem; align-items: center; justify-content: center;">
+                    {% csrf_token %}
+                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ product.stock }}" class="quantity-input" style="width: 60px; padding: 0.45rem; font-size: 0.9rem; text-align: center;">
+                    <input type="hidden" name="override" value="True">
+                    <button type="submit" class="btn-compact" style="padding: 0.45rem 0.65rem; background: var(--primary); color: #fff;" title="Update Quantity">
+                      <i class="fas fa-sync-alt"></i>
+                    </button>
+                  </form>
+                </td>
+                <td style="padding: 1rem; text-align: right; font-weight: 800; color: var(--primary);">${{ item.total_price }}</td>
+                <td style="padding: 1rem; text-align: center;">
+                  <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
+
+<form action="{% url 'store:cart_remove' product.id %}" method="post" class="cart-ajax-form" style="display: inline;">
+  {% csrf_token %}
+  <button type="submit" name="save_to_wishlist" value="true" style="background: none; border: none; cursor: pointer; color: var(--accent-rose); font-size: 0.88rem; padding: 0.35rem 0.6rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-input);" title="Save for Later">
+    <i class="far fa-heart"></i> Save
+  </button>
+</form>
+<form action="{% url 'store:cart_remove' product.id %}" method="post" class="cart-ajax-form" style="display: inline;">
+  {% csrf_token %}
+  <button type="submit" style="background: none; border: none; cursor: pointer; color: var(--text-dim); font-size: 1.05rem; padding: 0.35rem;" title="Remove Item">
+    <i class="fas fa-trash-alt"></i>
+  </button>
+</form>
+                  </div>
+                </td>
+              </tr>
+            {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Order Summary Card -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.75rem; box-shadow: var(--shadow-sm); position: sticky; top: 5.5rem;">
+      <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">Order Summary</h3>
+      
+      <div class="summary-row" style="display: flex; justify-content: space-between; padding: 0.5rem 0; color: var(--text-muted); font-size: 0.92rem;">
+        <span>Subtotal</span>
+        <span style="font-weight: 600; color: var(--text-main);">${{ cart.get_total_price }}</span>
+      </div>
+      
+      <div class="summary-row" style="display: flex; justify-content: space-between; padding: 0.5rem 0; color: var(--text-muted); font-size: 0.92rem;">
+        <span>Standard Shipping</span>
+        <span style="color: var(--accent-emerald); font-weight: 700;">FREE</span>
+      </div>
+      
+      <div class="summary-row" style="display: flex; justify-content: space-between; padding: 0.5rem 0; color: var(--text-muted); font-size: 0.85rem;">
+        <span>Taxes & Duties</span>
+        <span>Calculated at checkout</span>
+      </div>
+      
+      <div class="summary-row total" style="display: flex; justify-content: space-between; padding-top: 1rem; margin-top: 0.5rem; border-top: 1px solid var(--border-color); font-size: 1.25rem; font-weight: 800;">
+        <span>Total Amount</span>
+        <span style="color: var(--primary);">${{ cart.get_total_price }}</span>
+      </div>
+
+      <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+        <a href="{% url 'store:checkout' %}" class="btn-primary" style="text-align: center; padding: 0.85rem;">
+          Proceed to Checkout <i class="fas fa-arrow-right"></i>
+        </a>
+        <a href="{% url 'store:product_list' %}" style="text-align: center; color: var(--text-muted); font-size: 0.88rem; margin-top: 0.25rem;">
+          <i class="fas fa-arrow-left"></i> Continue Shopping
+        </a>
+      </div>
+    </div>
+  </div>
+  </div>
+{% else %}
+  <!-- Empty Cart State -->
+  <div id="cartAjaxRoot">
+  <div style="text-align: center; padding: 4rem 1rem; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-color); margin: 2rem 0 4rem; box-shadow: var(--shadow-sm);">
+    <i class="fas fa-shopping-cart" style="font-size: 3.8rem; color: var(--text-dim); margin-bottom: 1.25rem;"></i>
+    <h2>Your cart is empty</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1.75rem;">Looks like you haven't added any products to your cart yet.</p>
+    
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="{% url 'store:product_list' %}" class="btn-primary" style="display: inline-flex; width: auto;">
+        <i class="fas fa-shopping-bag"></i> Start Shopping
+      </a>
+      <a href="{% url 'store:product_list' %}" class="btn-primary" style="display: inline-flex; width: auto; background: #64748b;">
+        <i class="fas fa-arrow-left"></i> Continue Shopping
+      </a>
+    </div>
+  </div>
+  </div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,290 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ElectroMart - Tech & Gadgets Store{% endblock %}</title>
+  
+  <!-- Immediate Theme Application Script (Prevents flash) -->
+  <script>
+    (function() {
+      var savedTheme = localStorage.getItem('theme');
+      if (!savedTheme) {
+        savedTheme = 'light';
+      }
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+  <!-- Ensures the CSRF cookie is always set on first page load, even on
+       pages with no visible form, so AJAX POSTs (add-to-cart, wishlist,
+       etc.) never fail for a brand-new visitor. -->
+  {% csrf_token %}
+
+  <!-- Navbar -->
+  <nav class="navbar" style="position: relative;">
+    <div class="container nav-container">
+      
+      <!-- Logo -->
+      <a href="{% url 'store:product_list' %}" class="logo">
+        <i class="fas fa-bolt"></i> ElectroMart
+      </a>
+
+      <!-- Search Bar with Autocomplete -->
+<form action="{% url 'store:product_list' %}" method="get" class="search-form">
+  <i class="fas fa-search search-icon"></i>
+  <input type="text" name="q" id="searchInput" value="{{ query|default:'' }}" placeholder="Search premium tech, laptops, audio..." class="search-input">
+  <div id="searchSuggestions" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-md); z-index: 9999; max-height: 300px; overflow-y: auto; margin-top: 4px;"></div>
+</form>
+
+      <!-- Navigation Actions -->
+      <div class="nav-actions">
+        
+        <!-- DESKTOP NAV ITEMS (Hidden on mobile) -->
+        <div class="desktop-nav-items" style="display: flex; align-items: center; gap: 0.85rem;">
+          <!-- Shop Link -->
+          <a href="{% url 'store:product_list' %}#products-section" class="nav-link" id="shop-nav-link">
+            <i class="fas fa-store"></i> Shop
+          </a>
+
+          <!-- Theme Toggle Button -->
+          <button type="button" id="theme-toggle" class="theme-btn" title="Toggle Dark / Light Theme">
+            <i class="fas fa-moon"></i> 
+            <span class="theme-text">Dark</span>
+          </button>
+
+          <!-- Saved Items / Wishlist Link -->
+          <a href="{% url 'store:wishlist_list' %}" class="nav-link" title="My Saved Items">
+            <i class="fas fa-heart" style="color: var(--accent-rose);"></i> Saved
+            {% if wishlist_count > 0 %}
+              <span class="cart-badge" style="background: var(--accent-rose);">
+                {{ wishlist_count }}
+              </span>
+            {% endif %}
+          </a>
+          
+          <!-- User Authentication Links -->
+          {% if user.is_authenticated %}
+            <a href="{% url 'store:profile' %}" class="nav-link">
+              <i class="fas fa-user-circle"></i> {{ user.username }}
+            </a>
+            <a href="{% url 'store:logout' %}" class="nav-link">
+              <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+          {% else %}
+            <a href="{% url 'store:login' %}" class="nav-link">
+              <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+            <a href="{% url 'store:register' %}" class="nav-link">
+              <i class="fas fa-user-plus"></i> Register
+            </a>
+          {% endif %}
+        </div>
+
+        <!-- Shopping Cart Button -->
+        <a href="{% url 'store:cart_detail' %}" class="cart-btn">
+          <i class="fas fa-shopping-bag"></i> Cart
+          <span class="cart-badge">{{ cart|length }}</span>
+        </a>
+
+        <!-- BURGER MENU BUTTON (Only visible on mobile) -->
+        <button id="burgerMenuBtn" class="burger-btn" style="display: none; background: none; border: none; font-size: 1.5rem; color: var(--text-main); cursor: pointer; padding: 0.2rem;">
+          <i class="fas fa-bars"></i>
+        </button>
+        
+      </div>
+    </div>
+  </nav>
+
+  <!-- MOBILE DROPDOWN MENU (Initially Hidden) -->
+  <div id="mobileMenu" style="display: none; position: absolute; top: 60px; left: 0; width: 100%; background: var(--bg-card); border-bottom: 1px solid var(--border-color); padding: 1rem; box-shadow: var(--shadow-md); z-index: 9999;">
+    <div style="display: flex; flex-direction: column; gap: 0.75rem; padding: 0 1rem;">
+      <a href="{% url 'store:product_list' %}#products-section" class="nav-link" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;">
+        <i class="fas fa-store"></i> Shop
+      </a>
+      <button type="button" id="mobileThemeToggle" class="theme-btn" style="width: 100%; justify-content: flex-start; padding: 0.5rem 0; background: none; border: none; color: var(--text-main); font-size: 0.9rem;">
+        <i class="fas fa-moon"></i> Theme
+      </button>
+      <a href="{% url 'store:wishlist_list' %}" class="nav-link" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;">
+        <i class="fas fa-heart" style="color: var(--accent-rose);"></i> Saved 
+        {% if wishlist_count > 0 %}
+          <span class="cart-badge" style="background: var(--accent-rose);">
+            {{ wishlist_count }}
+          </span>
+        {% endif %}
+      </a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'store:profile' %}" class="nav-link" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;">
+          <i class="fas fa-user-circle"></i> Profile
+        </a>
+        <a href="{% url 'store:logout' %}" class="nav-link" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      {% else %}
+        <a href="{% url 'store:login' %}" class="nav-link" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;">
+          <i class="fas fa-sign-in-alt"></i> Login
+        </a>
+        <a href="{% url 'store:register' %}" class="nav-link" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;">
+          <i class="fas fa-user-plus"></i> Register
+        </a>
+      {% endif %}
+      <a href="{% url 'store:cart_detail' %}" class="cart-btn" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0; width: 100%; justify-content: flex-start; background: transparent; color: var(--text-main); border: none;">
+        <i class="fas fa-shopping-bag"></i> Cart 
+        <span class="cart-badge">{{ cart|length }}</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Flash Toast Messages -->
+  {% if messages %}
+    <div class="messages-container">
+      {% for message in messages %}
+        <div class="toast toast-{{ message.tags }}">
+          {% if message.tags == 'success' %}
+            <i class="fas fa-check-circle"></i>
+          {% elif message.tags == 'error' %}
+            <i class="fas fa-exclamation-circle"></i>
+          {% elif message.tags == 'warning' %}
+            <i class="fas fa-exclamation-triangle"></i>
+          {% else %}
+            <i class="fas fa-info-circle"></i>
+          {% endif %}
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Main Content Block -->
+  <main class="container" style="flex: 1;">
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  <!-- Back to Top Button -->
+  <button id="backToTopBtn" title="Go to top" style="position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; background: var(--primary); color: #fff; border: none; box-shadow: var(--shadow-glow); cursor: pointer; font-size: 1.2rem; display: none; align-items: center; justify-content: center; z-index: 9999; transition: var(--transition);">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-content">
+      
+      <!-- Brand Info -->
+      <div>
+        <a href="{% url 'store:product_list' %}" class="logo">
+          <i class="fas fa-bolt"></i> ElectroMart
+        </a>
+        <p class="footer-desc">
+          Your ultimate store for cutting-edge electronics, audio gear, smart gadgets, and high-performance hardware.
+        </p>
+      </div>
+
+      <!-- Categories -->
+      <div>
+        <h4 class="footer-title">Categories</h4>
+        <ul class="footer-links">
+          {% for cat in all_categories %}
+            <li>
+              <a href="{% url 'store:product_list_by_category' cat.slug %}">
+                <i class="fas {{ cat.icon }}" style="font-size: 0.8rem; margin-right: 0.25rem;"></i> 
+                {{ cat.name }}
+              </a>
+            </li>
+          {% empty %}
+            <li><a href="{% url 'store:product_list' %}">Electronics</a></li>
+            <li><a href="{% url 'store:product_list' %}">Audio</a></li>
+            <li><a href="{% url 'store:product_list' %}">Gadgets</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Customer Care -->
+      <div>
+        <h4 class="footer-title">Customer Care</h4>
+        <ul class="footer-links">
+          {% if user.is_authenticated %}
+            <li>
+              <a href="{% url 'store:profile' %}">
+                <i class="fas fa-truck-ramping" style="font-size: 0.8rem;"></i> Order Tracking
+              </a>
+            </li>
+          {% else %}
+            <li>
+              <a href="{% url 'store:login' %}">
+                <i class="fas fa-truck-ramping" style="font-size: 0.8rem;"></i> Order Tracking
+              </a>
+            </li>
+          {% endif %}
+          <li>
+            <a href="#shipping-section">
+              <i class="fas fa-shipping-fast" style="font-size: 0.8rem;"></i> Shipping Policy
+            </a>
+          </li>
+          <li>
+            <a href="#returns-section">
+              <i class="fas fa-undo" style="font-size: 0.8rem;"></i> Returns & Refunds
+            </a>
+          </li>
+          <li>
+            <a href="#faq-section">
+              <i class="fas fa-circle-question" style="font-size: 0.8rem;"></i> FAQ
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Account -->
+      <div>
+        <h4 class="footer-title">Account</h4>
+        <ul class="footer-links">
+          {% if user.is_authenticated %}
+            <li>
+              <a href="{% url 'store:wishlist_list' %}">
+                <i class="fas fa-heart" style="font-size: 0.8rem;"></i> Saved Items
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'store:profile' %}">
+                <i class="fas fa-receipt" style="font-size: 0.8rem;"></i> My Orders
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'store:logout' %}">
+                <i class="fas fa-sign-out-alt" style="font-size: 0.8rem;"></i> Sign Out
+              </a>
+            </li>
+          {% else %}
+            <li>
+              <a href="{% url 'store:login' %}">
+                <i class="fas fa-sign-in-alt" style="font-size: 0.8rem;"></i> Sign In
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'store:register' %}">
+                <i class="fas fa-user-plus" style="font-size: 0.8rem;"></i> Create Account
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+      
+    </div>
+    
+    <div class="container footer-bottom">
+      <p>&copy; 2026 ElectroMart.</p>
+    </div>
+  </footer>
+
+  <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

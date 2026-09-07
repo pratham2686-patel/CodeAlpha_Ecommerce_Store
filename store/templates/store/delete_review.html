@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 3rem auto; text-align: center; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2rem;">
+  <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem; color: var(--accent-rose); margin-bottom: 1rem;"></i>
+  <h2>Delete Review?</h2>
+  <p style="color: var(--text-muted);">Are you sure you want to delete your review for "{{ review.product.name }}"?</p>
+  <form method="post" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn-primary" style="background: var(--accent-rose);">Yes, Delete</button>
+  </form>
+  <a href="{% url 'store:product_detail' slug=review.product.slug %}" class="btn-compact" style="background: var(--bg-input); color: var(--text-muted);">Cancel</a>
+</div>
+{% endblock %}

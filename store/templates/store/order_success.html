@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block title %}Order Confirmed - ElectroMart{% endblock %}
+
+{% block content %}
+
+<!-- Top Back to Home Nav Bar -->
+<div style="margin: 1.5rem 0 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+  <a href="{% url 'store:product_list' %}" class="btn-compact" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+    <i class="fas fa-home"></i> Back to Home
+  </a>
+  <span style="color: var(--text-muted); font-size: 0.88rem;">
+    Order ID: <strong>#{{ order.id }}</strong> &nbsp;|&nbsp; <i class="fas fa-clock"></i> <strong>{{ order.created_at|date:"M d, Y \a\t h:i A" }}</strong>
+  </span>
+</div>
+
+<div class="invoice-card" style="margin-top: 1rem; max-width: 680px; margin: 1.75rem auto 3rem;">
+  <div class="invoice-header">
+    <div class="success-icon">
+      <i class="fas fa-check"></i>
+    </div>
+    <h1 style="font-size: 1.75rem; margin-bottom: 0.4rem;">Order Successfully Placed!</h1>
+    <p style="color: var(--text-muted); font-size: 0.92rem;">
+      Thank you for shopping with ElectroMart. Your order has been received on 
+      <strong>{{ order.created_at|date:"N j, Y \a\t h:i A" }}</strong> and is being processed.
+    </p>
+  </div>
+
+  <!-- Professional Estimated Delivery Box -->
+  <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(99, 102, 241, 0.16) 100%); border: 1px solid rgba(79, 70, 229, 0.22); border-radius: var(--radius-md); padding: 1.1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+    <div style="width: 44px; height: 44px; background: var(--primary); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+      <i class="fas fa-shipping-fast"></i>
+    </div>
+    <div>
+      <div style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: var(--primary); letter-spacing: 0.05em;">
+        Estimated Delivery
+      </div>
+      <div style="font-size: 1.15rem; font-weight: 800; color: var(--text-main);">
+        <i class="fas fa-calendar-days"></i> {{ order.delivery_start|date:"N j" }} – {{ order.delivery_end|date:"j, Y" }}
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-muted);">Standard Express Shipping (4–7 Business Days)</div>
+    </div>
+  </div>
+
+  <!-- Visual Order Tracking Timeline -->
+  {% include 'store/_order_tracker.html' %}
+
+  <!-- Current Order Items Summary -->
+  <div style="margin-bottom: 1.25rem;">
+    <h3 style="font-size: 1.05rem; margin-bottom: 0.65rem; color: var(--text-main); display: flex; align-items: center; justify-content: space-between;">
+      <span>Current Order Items (Order #{{ order.id }})</span>
+      <span style="font-size: 0.9rem; color: var(--primary); font-weight: 700;">${{ order.total_price }}</span>
+    </h3>
+    
+    <div style="background: var(--bg-input); border-radius: var(--radius-md); padding: 0.85rem 1rem; margin-bottom: 1.25rem; border: 1px solid var(--border-color);">
+      {% for item in order.items.all %}
+        <div style="display: flex; justify-content: space-between; padding: 0.45rem 0; border-bottom: 1px dashed var(--border-color); font-size: 0.92rem;">
+          <div>
+            <strong>{{ item.quantity }}x</strong> {{ item.product.name }}
+          </div>
+          <div style="font-weight: 600; color: var(--primary);">${{ item.get_cost }}</div>
+        </div>
+      {% endfor %}
+      
+      <div style="display: flex; justify-content: space-between; padding-top: 0.65rem; font-size: 1.1rem; font-weight: 800;">
+        <span>Order Total</span>
+        <span style="color: var(--accent-emerald);">${{ order.total_price }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPDATED: Purchase History with View All Toggle -->
+  {% if user_orders and user_orders.count > 1 %}
+    <div style="margin-bottom: 1.5rem; background: var(--bg-card); border: 1px solid rgba(79, 70, 229, 0.2); border-radius: var(--radius-md); padding: 1.25rem; box-shadow: var(--shadow-sm);">
+      <h3 style="font-size: 1.05rem; margin-bottom: 0.4rem; color: var(--primary); display: flex; align-items: center; gap: 0.4rem;">
+        <i class="fas fa-history"></i> Purchase History
+      </h3>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.85rem;">
+        All items purchased across your <strong>{{ user_orders.count }} orders</strong>:
+      </p>
+
+      <!-- Show only first 4 items initially -->
+      <div id="purchaseHistoryList" style="display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1rem;">
+        {% for item in all_user_items|slice:":4" %}
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; padding: 0.5rem 0.75rem; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-sm); flex-wrap: wrap; gap: 0.3rem;">
+            <div>
+              <span style="font-weight: 700; color: var(--text-main);">{{ item.quantity }}x {{ item.product.name }}</span>
+              <span style="font-size: 0.75rem; color: var(--text-dim); margin-left: 0.4rem;">
+                (Order #{{ item.order.id }} - <i class="fas fa-clock"></i> {{ item.order.created_at|date:"M d, Y \a\t h:i A" }})
+              </span>
+            </div>
+            <span style="font-weight: 700; color: var(--primary);">${{ item.get_cost }}</span>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Hidden items (only show when clicked) -->
+      <div id="purchaseHistoryHidden" style="display: none; flex-direction: column; gap: 0.6rem; margin-bottom: 1rem;">
+        {% for item in all_user_items|slice:"4:" %}
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; padding: 0.5rem 0.75rem; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-sm); flex-wrap: wrap; gap: 0.3rem;">
+            <div>
+              <span style="font-weight: 700; color: var(--text-main);">{{ item.quantity }}x {{ item.product.name }}</span>
+              <span style="font-size: 0.75rem; color: var(--text-dim); margin-left: 0.4rem;">
+                (Order #{{ item.order.id }} - <i class="fas fa-clock"></i> {{ item.order.created_at|date:"M d, Y \a\t h:i A" }})
+              </span>
+            </div>
+            <span style="font-weight: 700; color: var(--primary);">${{ item.get_cost }}</span>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- View All / Show Less Button -->
+      {% if all_user_items|length > 4 %}
+        <div style="text-align: center; margin-top: 0.5rem;">
+          <button id="togglePurchaseHistoryBtn" onclick="togglePurchaseHistory()" style="background: none; border: none; color: var(--primary); font-weight: 600; font-size: 0.9rem; cursor: pointer;">
+            View All <i class="fas fa-arrow-down"></i>
+          </button>
+        </div>
+      {% endif %}
+
+      <!-- Total Spent (Always visible) -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 2px solid var(--border-color); padding-top: 0.75rem; font-size: 1.15rem; font-weight: 800;">
+        <span>Total Spent</span>
+        <span style="color: var(--primary);">${{ account_total_spent|floatformat:2 }}</span>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- JavaScript for Toggle -->
+  <script>
+    function togglePurchaseHistory() {
+      var hiddenItems = document.getElementById('purchaseHistoryHidden');
+      var toggleBtn = document.getElementById('togglePurchaseHistoryBtn');
+      if (hiddenItems.style.display === 'none') {
+        hiddenItems.style.display = 'flex';
+        toggleBtn.innerHTML = 'Show Less <i class="fas fa-arrow-up"></i>';
+      } else {
+        hiddenItems.style.display = 'none';
+        toggleBtn.innerHTML = 'View All <i class="fas fa-arrow-down"></i>';
+      }
+    }
+  </script>
+
+  <!-- Customer, Payment & Detailed Shipping Info -->
+  <div class="detail-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.1rem; margin-bottom: 1.75rem;">
+    <div>
+      <div style="font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Customer & Payment</div>
+      <div style="font-weight: 600; margin-top: 0.2rem; font-size: 0.92rem;">{{ order.full_name }}</div>
+      <div style="font-size: 0.82rem; color: var(--text-muted);">{{ order.email }}</div>
+      {% if order.phone_number %}
+        <div style="font-size: 0.82rem; color: var(--text-muted);"><i class="fas fa-phone"></i> {{ order.phone_number }}</div>
+      {% endif %}
+    </div>
+    <div>
+      <div style="font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Shipping Address</div>
+      <div style="font-weight: 600; margin-top: 0.2rem; font-size: 0.92rem;">{{ order.address }}</div>
+      <div style="font-size: 0.82rem; color: var(--text-muted);">
+        {{ order.city }}{% if order.state %}, {{ order.state }}{% endif %}, {{ order.postal_code }}
+      </div>
+      <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 500;">{{ order.country }}</div>
+    </div>
+  </div>
+
+  <!-- Compact Action Buttons -->
+  <div style="display: flex; gap: 0.65rem; justify-content: center; flex-wrap: wrap;">
+    <a href="{% url 'store:download_invoice_pdf' order.id %}?preview=1" target="_blank" class="btn-compact" style="background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%); color: #fff;">
+      <i class="fas fa-eye"></i> Preview Bill
+    </a>
+    
+    <a href="{% url 'store:download_invoice_pdf' order.id %}" class="btn-compact" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #fff;">
+      <i class="fas fa-file-pdf"></i> Download PDF Bill
+    </a>
+
+    <a href="{% url 'store:product_list' %}" class="btn-compact" style="background: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%); color: #fff;">
+      <i class="fas fa-shopping-bag"></i> Continue Shopping
+    </a>
+  </div>
+</div>
+
+{% endblock %}

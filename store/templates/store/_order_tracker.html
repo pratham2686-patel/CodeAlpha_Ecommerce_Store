@@ -1,0 +1,54 @@
+<!-- Visual order tracking timeline. Expects `order` in context. -->
+<!-- status_step: Pending=1, Processing=2, Shipped=3, Delivered=4 -->
+<div class="order-tracker">
+
+  <!-- Step 1: Order Placed -->
+  <div class="tracker-step {% if order.status_step >= 1 %}completed{% endif %} {% if order.status_step == 1 %}current{% endif %}">
+    <div class="tracker-line"></div>
+    <div class="tracker-circle">
+      {% if order.status_step > 1 %}
+        <i class="fas fa-check"></i>
+      {% else %}
+        <i class="fas fa-file-invoice"></i>
+      {% endif %}
+    </div>
+    <div class="tracker-label">Order<br>Placed</div>
+  </div>
+
+  <!-- Step 2: Processing -->
+  <div class="tracker-step {% if order.status_step >= 2 %}completed{% endif %} {% if order.status_step == 2 %}current{% endif %}">
+    <div class="tracker-line"></div>
+    <div class="tracker-circle">
+      {% if order.status_step > 2 %}
+        <i class="fas fa-check"></i>
+      {% else %}
+        <i class="fas fa-box-open"></i>
+      {% endif %}
+    </div>
+    <div class="tracker-label">Processing</div>
+  </div>
+
+  <!-- Step 3: Shipped -->
+  <div class="tracker-step {% if order.status_step >= 3 %}completed{% endif %} {% if order.status_step == 3 %}current{% endif %}">
+    <div class="tracker-line"></div>
+    <div class="tracker-circle">
+      {% if order.status_step > 3 %}
+        <i class="fas fa-check"></i>
+      {% else %}
+        <i class="fas fa-truck"></i>
+      {% endif %}
+    </div>
+    <div class="tracker-label">Shipped</div>
+  </div>
+
+  <!-- Step 4: Delivered -->
+  <div class="tracker-step {% if order.status_step >= 4 %}completed{% endif %} {% if order.status_step == 4 %}current{% endif %}">
+    <div class="tracker-line"></div>
+    <div class="tracker-circle">
+      <i class="fas fa-house-chimney"></i>
+    </div>
+    <div class="tracker-label">Delivered</div>
+  </div>
+
+</div>
+

@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}ElectroMart - Modern E-Commerce Store{% endblock %}
+
+{% block content %}
+
+
+
+<!-- Hero Banner -->
+{% if not category and not query %}
+
+
+<section class="hero-banner">
+  <div>
+    <span class="hero-tag"><i class="fas fa-sparkles"></i> Next-Gen Tech 2026</span>
+    <h1 class="hero-title">Elevate Your Digital Experience</h1>
+    <p class="hero-subtitle">
+      Discover premium gadgets, noise-canceling headphones, smart wearables, and powerful laptops with fast free delivery.
+    </p>
+    <a href="#products-section" class="btn-hero">
+      Explore Catalog <i class="fas fa-arrow-right"></i>
+    </a>
+  </div>
+  <div class="hero-img-wrapper">
+    <img src="https://images.unsplash.com/photo-1498049794561-7780e7231661?w=700&auto=format&fit=crop&q=80" alt="Featured Tech">
+  </div>
+</section>
+<!-- RECENTLY VIEWED (Horizontal Scroll on Mobile) -->
+{% if recently_viewed_products %}
+  <div class="container" style="margin-bottom: 2rem; padding: 0 1.5rem;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+      
+      <!-- Header (Without View All link) -->
+      <h3 style="font-size: 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+        <i class="fas fa-clock-rotate-left" style="color: var(--primary);"></i> Recently Viewed
+      </h3>
+
+      <!-- Horizontal Scroll Container -->
+     <div class="recently-scroll-container" style="display: flex; overflow-x: auto; gap: 1rem; padding-bottom: 1rem; scrollbar-width: thin; -webkit-overflow-scrolling: touch; flex-wrap: nowrap;">
+        {% for prod in recently_viewed_products %}
+          <div style="flex: 0 0 auto; width: 160px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.75rem; display: flex; flex-direction: column; align-items: center; text-align: center;">
+            <a href="{{ prod.get_absolute_url }}" style="display: flex; flex-direction: column; align-items: center; width: 100%; color: inherit; text-decoration: none;">
+              <img src="{{ prod.image_url }}" alt="{{ prod.name }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm); margin-bottom: 0.5rem;">
+              <div style="font-weight: 600; font-size: 0.8rem; line-height: 1.2; margin-bottom: 0.2rem;">{{ prod.name }}</div>
+              <div style="font-size: 0.75rem; color: var(--primary); font-weight: 700;">${{ prod.price }}</div>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+
+    </div>
+  </div>
+{% endif %}
+
+{% endif %}
+
+
+<!-- Category Pills Filter Bar -->
+<div class="category-bar">
+  <a href="{% url 'store:product_list' %}" class="category-chip {% if not category %}active{% endif %}">
+    <i class="fas fa-th-large"></i> All Products
+  </a>
+  {% for cat in categories %}
+    <a href="{% url 'store:product_list_by_category' cat.slug %}" class="category-chip {% if category.slug == cat.slug %}active{% endif %}">
+      <i class="fas {{ cat.icon }}"></i> {{ cat.name }}
+    </a>
+  {% endfor %}
+</div>
+
+<!-- Section Header with Sorting & Filters -->
+<div class="section-header" id="products-section">
+  <div>
+    <h2 class="section-title">
+      {% if category %}
+        {{ category.name }}
+      {% elif query %}
+        Search Results for "{{ query }}"
+      {% else %}
+        Featured Products
+      {% endif %}
+    </h2>
+    <p style="color: var(--text-muted); font-size: 0.9rem;">
+      Showing {{ products.paginator.count }} item{% if products.paginator.count != 1 %}s{% endif %}
+    </p>
+  </div>
+
+  <!-- FIX: Added action="#products-section" to scroll back automatically -->
+  <form method="get" id="filterSortForm" action="#products-section" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; justify-content: flex-end;">
+    
+    <!-- Hidden search query -->
+    {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+    
+    <!-- FILTERS UI (Price, Rating, In Stock) -->
+   <div class="filter-box" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.5rem 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; box-shadow: var(--shadow-sm);">
+      
+      <!-- Price Range Filter -->
+      <div style="display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap;">
+        <span style="font-weight: 600; font-size: 0.8rem; color: var(--text-muted);">Price:</span>
+        <input type="number" name="min_price" value="{{ min_price }}" placeholder="Min $" style="width: 60px; padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); font-size: 0.8rem;">
+        <span style="color: var(--text-muted);">-</span>
+        <input type="number" name="max_price" value="{{ max_price }}" placeholder="Max $" style="width: 60px; padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); font-size: 0.8rem;">
+      </div>
+
+      <!-- Rating Filter -->
+      <div style="display: flex; align-items: center; gap: 0.3rem;">
+        <span style="font-weight: 600; font-size: 0.8rem; color: var(--text-muted);">Rating:</span>
+        <select name="min_rating" style="padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); font-size: 0.8rem;">
+          <option value="">All</option>
+          <option value="4" {% if min_rating == '4' %}selected{% endif %}>4+ Stars</option>
+          <option value="3" {% if min_rating == '3' %}selected{% endif %}>3+ Stars</option>
+          <option value="2" {% if min_rating == '2' %}selected{% endif %}>2+ Stars</option>
+        </select>
+      </div>
+
+      <!-- In Stock Filter -->
+      <div style="display: flex; align-items: center; gap: 0.3rem;">
+        <input type="checkbox" name="in_stock" value="true" id="in_stock_check" {% if in_stock == 'true' %}checked{% endif %} style="width: 14px; height: 14px; cursor: pointer;">
+        <label for="in_stock_check" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); cursor: pointer;">In Stock Only</label>
+      </div>
+
+      <!-- Apply & Reset Buttons -->
+      <div style="display: flex; gap: 0.3rem;">
+        <button type="submit" class="btn-compact" style="background: var(--primary); color: #fff; padding: 0.2rem 0.6rem; font-size: 0.75rem;">
+          <i class="fas fa-filter"></i> Apply
+        </button>
+        <!-- FIX: Reset link bhi #products-section par jump karega -->
+        <a href="{% url 'store:product_list' %}#products-section" class="btn-compact" style="background: var(--bg-input); color: var(--text-muted); padding: 0.2rem 0.6rem; font-size: 0.75rem; border: 1px solid var(--border-color);">
+          <i class="fas fa-undo"></i> Reset
+        </a>
+      </div>
+    </div>
+
+    <!-- SORT DROPDOWN (Side-by-side with Filters) -->
+    <select name="sort" class="sort-select" style="padding: 0.3rem 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font-size: 0.85rem; cursor: pointer; box-shadow: var(--shadow-sm);" onchange="document.getElementById('filterSortForm').submit()">
+      <option value="">Sort by: Default</option>
+      <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+      <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+      <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+      <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>Highest Rated</option>
+    </select>
+  </form>
+</div>
+
+<!-- Product Grid -->
+{% if products %}
+  <div class="product-grid">
+    {% for product in products %}
+      <div class="product-card">
+        <div class="card-badge-container">
+          {% if product.stock == 0 %}
+            <span class="card-badge discount-badge"><i class="fas fa-ban"></i> Out of Stock</span>
+          {% elif product.is_featured %}
+            <span class="card-badge"><i class="fas fa-fire"></i> Best Seller</span>
+          {% endif %}
+        </div>
+
+        <a href="{% url 'store:wishlist_add' product.id %}" class="btn-wishlist ajax-wishlist" data-url="{% url 'store:wishlist_add' product.id %}" title="Save to Wishlist">
+          <i class="far fa-heart"></i>
+        </a>
+        
+        <a href="{{ product.get_absolute_url }}" class="product-img-wrapper">
+          <img src="{{ product.image_url }}" alt="{{ product.name }}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1498049794561-7780e7231661?w=800&auto=format&fit=crop&q=80'" loading="lazy">
+        </a>
+
+        <div class="product-info">
+          <span class="product-category">{{ product.category.name }}</span>
+          <h3 class="product-name">
+            <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>
+          </h3>
+
+          <div class="product-rating">
+            <i class="fas fa-star"></i>
+            <span>{{ product.rating }}</span>
+            <span style="color: var(--text-dim); margin-left: 0.25rem;">
+              {% if product.stock > 0 %}
+                ({{ product.stock }} in stock)
+              {% else %}
+                (Out of Stock)
+              {% endif %}
+            </span>
+          </div>
+
+          <div class="product-bottom">
+            <!-- UPDATED: Discount Price Display -->
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+              {% if product.original_price and product.original_price > product.price %}
+                <span style="text-decoration: line-through; color: var(--text-dim); font-size: 0.95rem;">
+                  ${{ product.original_price }}
+                </span>
+                <span class="product-price">${{ product.price }}</span>
+                <span style="background: var(--accent-rose); color: #fff; font-size: 0.7rem; padding: 0.1rem 0.5rem; border-radius: var(--radius-full); font-weight: 700;">
+                  {{ product.discount_percent }}% OFF
+                </span>
+              {% else %}
+                <span class="product-price">${{ product.price }}</span>
+              {% endif %}
+            </div>
+
+            {% if product.stock > 0 %}
+              <button type="button" class="btn-add-cart ajax-add-cart" data-url="{% url 'store:cart_add' product.id %}" title="Add to Cart">
+                <i class="fas fa-plus"></i>
+              </button>
+            {% else %}
+              <button type="button" class="btn-add-cart" style="background: #cbd5e1; cursor: not-allowed;" title="Out of Stock" disabled>
+                <i class="fas fa-ban"></i>
+              </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+ <!-- PAGINATION BUTTONS (Desktop & Mobile Friendly) -->
+{% if products.has_other_pages %}
+  <div style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin: 2rem 0 3rem; flex-wrap: wrap;">
+    
+    <!-- Previous Button -->
+    {% if products.has_previous %}
+      <a href="?page={{ products.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if min_rating %}&min_rating={{ min_rating }}{% endif %}{% if in_stock %}&in_stock={{ in_stock }}{% endif %}#products-section" 
+         class="btn-compact" style="padding: 0.4rem 0.8rem; background: var(--bg-card); border: 1px solid var(--border-color);">
+        <i class="fas fa-chevron-left"></i> Previous
+      </a>
+    {% else %}
+      <button class="btn-compact" style="padding: 0.4rem 0.8rem; background: var(--bg-input); color: var(--text-dim); border: 1px solid var(--border-color); cursor: not-allowed;" disabled>
+        <i class="fas fa-chevron-left"></i> Previous
+      </button>
+    {% endif %}
+
+    <!-- Page Numbers -->
+    {% for num in products.paginator.page_range %}
+      {% if products.number == num %}
+        <span style="padding: 0.4rem 0.8rem; background: var(--primary); color: #fff; border-radius: var(--radius-sm); font-weight: 600;">
+          {{ num }}
+        </span>
+      {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+        <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if min_rating %}&min_rating={{ min_rating }}{% endif %}{% if in_stock %}&in_stock={{ in_stock }}{% endif %}#products-section" 
+           style="padding: 0.4rem 0.8rem; color: var(--text-main); border-radius: var(--radius-sm); font-weight: 600;">
+          {{ num }}
+        </a>
+      {% endif %}
+    {% endfor %}
+
+    <!-- Next Button -->
+    {% if products.has_next %}
+      <a href="?page={{ products.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if min_rating %}&min_rating={{ min_rating }}{% endif %}{% if in_stock %}&in_stock={{ in_stock }}{% endif %}#products-section" 
+         class="btn-compact" style="padding: 0.4rem 0.8rem; background: var(--bg-card); border: 1px solid var(--border-color);">
+        Next <i class="fas fa-chevron-right"></i>
+      </a>
+    {% else %}
+      <button class="btn-compact" style="padding: 0.4rem 0.8rem; background: var(--bg-input); color: var(--text-dim); border: 1px solid var(--border-color); cursor: not-allowed;" disabled>
+        Next <i class="fas fa-chevron-right"></i>
+      </button>
+    {% endif %}
+
+  </div>
+{% endif %}
+
+{% else %}
+  <div style="text-align: center; padding: 4rem 1rem; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-color); margin-bottom: 3rem; box-shadow: var(--shadow-sm);">
+    <i class="fas fa-box-open" style="font-size: 3.5rem; color: var(--text-dim); margin-bottom: 1rem;"></i>
+    <h3>No products found</h3>
+    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+      Try adjusting your search criteria or category filter.
+    </p>
+    <a href="{% url 'store:product_list' %}#products-section" class="btn-primary" style="display: inline-flex; width: auto;">
+      Clear Filters
+    </a>
+  </div>
+{% endif %}
+
+<!-- POLICIES & FAQ (Only on Home Page) -->
+<div class="container" style="margin-top: 2rem; margin-bottom: 2rem; padding: 0 1.5rem;">
+  
+  <div id="shipping-section" style="scroll-margin-top: 2rem; padding: 2rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem;">
+    <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">Shipping Policy</h2>
+    <p style="color: var(--text-muted); line-height: 1.8;">
+      <strong>Standard Shipping:</strong> Free standard shipping on all orders. Delivery within 4-7 business days.
+      <br><br>
+      <strong>Express Shipping:</strong> $9.99 flat rate. Delivery within 1-2 business days.
+      <br><br>
+      <strong>International Shipping:</strong> Calculated at checkout. Delivery depends on destination.
+    </p>
+  </div>
+
+  <div id="returns-section" style="scroll-margin-top: 2rem; padding: 2rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem;">
+    <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">Returns & Refunds</h2>
+    <p style="color: var(--text-muted); line-height: 1.8;">
+      <strong>30-Day Returns:</strong> You can return any product within 30 days of delivery.
+      <br><br>
+      <strong>Conditions:</strong> Product must be in original packaging and unused.
+      <br><br>
+      <strong>Refund Process:</strong> Refunds are processed within 5-7 business days after we receive the returned item.
+    </p>
+  </div>
+
+  <div id="faq-section" style="scroll-margin-top: 2rem; padding: 2rem; margin-bottom: 2rem;">
+    <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">Frequently Asked Questions</h2>
+    <div style="display: flex; flex-direction: column; gap: 1rem; color: var(--text-muted);">
+      <div>
+        <strong>Q: How do I track my order?</strong>
+        <p>You can track your order by logging into your profile and checking the order status.</p>
+      </div>
+      <div>
+        <strong>Q: Do you offer discounts?</strong>
+        <p>Yes! We regularly offer discounts. Check our product pages for the latest deals.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
